@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - {{ user.Name }} - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>User Details</h2>
+    <div>
+        <a href="{{ url_for('admin_edit_user', user_id=user.ID) }}" class="btn btn-warning me-2">Edit User</a>
+        <button class="btn btn-danger me-2" onclick="deleteUser('{{ user.ID }}', '{{ user.Name }}')">Delete User</button>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary">Back to Users</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Personal Information</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>Name:</strong></td>
+                        <td>{{ user.Name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td>{{ user.Email }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Role:</strong></td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if user.Role == 'admin' else 'primary' }}">
+                                {{ user.Role }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phone:</strong></td>
+                        <td>{{ user.Phone or 'Not provided' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Address:</strong></td>
+                        <td>{{ user.Address or 'Not provided' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Password:</strong></td>
+                        <td>
+                            <span id="password-display">••••••••</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="togglePassword('{{ user.ID }}')">Show</button>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Order Summary</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Total Orders:</strong> {{ orders|length }}</p>
+                {% if orders %}
+                    {% set total_spent = orders|sum(attribute='order.Quantity')|float * orders|map(attribute='product.Price')|sum %}
+                    <p><strong>Total Spent:</strong> ${{ "%.2f"|format(total_spent) }}</p>
+                {% else %}
+                    <p><strong>Total Spent:</strong> $0.00</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Order History</h4>
+            </div>
+            <div class="card-body">
+                {% if orders %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Payment Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order_detail in orders %}
+                                <tr>
+                                    <td>{{ order_detail.order.ID[:8] }}...</td>
+                                    <td>{{ order_detail.product.Name or 'Unknown Product' }}</td>
+                                    <td>{{ order_detail.order.Quantity }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if order_detail.order.PaymentMethod == 'card' else ('success' if order_detail.order.PaymentMethod == 'upi' else 'warning') }}">
+                                            {{ 'Card' if order_detail.order.PaymentMethod == 'card' else ('UPI' if order_detail.order.PaymentMethod == 'upi' else 'COD') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if order_detail.order.Status == 'pending' else 'success' }}">
+                                            {{ order_detail.order.Status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order_detail.order.Date[:10] if order_detail.order.Date else 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <p>No orders found for this user.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let passwordVisible = false;
+
+function togglePassword(userId) {
+    const passwordDisplay = document.getElementById('password-display');
+    const button = event.target;
+    
+    if (!passwordVisible) {
+        fetch('/admin/view_password/' + userId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                passwordDisplay.textContent = data.password;
+                button.textContent = 'Hide';
+                passwordVisible = true;
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error retrieving password');
+        });
+    } else {
+        passwordDisplay.textContent = '••••••••';
+        button.textContent = 'Show';
+        passwordVisible = false;
+    }
+}
+
+function deleteUser(userId, userName) {
+    if (confirm('Are you sure you want to delete user "' + userName + '"? This will also delete all their orders. This action cannot be undone.')) {
+        fetch('/admin/delete_user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User deleted successfully');
+                window.location.href = '/admin/users';
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting user');
+        });
+    }
+}
+</script>
+{% endblock %}

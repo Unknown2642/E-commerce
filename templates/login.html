@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Login</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email or Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email or name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <div class="mt-2">
+                        <a href="{{ url_for('register') }}" class="btn btn-link">Don't have an account? Register</a>
+                        <a href="{{ url_for('forgot_password') }}" class="btn btn-link">Forgot Password?</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!email) {
+            alert('Email or name is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!password) {
+            alert('Password is required');
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

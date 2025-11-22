@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>User Management</h2>
+    <div>
+        <a href="{{ url_for('admin_add_user') }}" class="btn btn-success me-2">Add New User</a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form method="GET" action="{{ url_for('admin_search_users') }}">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" placeholder="Search users..." value="{{ query or '' }}">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if query %}
+<div class="alert alert-info">
+    Search results for: {{ query|safe }}
+</div>
+{% endif %}
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.Name }}</td>
+                <td>{{ user.Email }}</td>
+                <td>
+                    <span class="badge bg-{{ 'danger' if user.Role == 'admin' else 'primary' }}">
+                        {{ user.Role }}
+                    </span>
+                </td>
+                <td>{{ user.Phone or 'N/A' }}</td>
+                <td>{{ user.Address[:30] }}{% if user.Address and user.Address|length > 30 %}...{% endif %}</td>
+                <td>
+                    <a href="{{ url_for('admin_user_detail', user_id=user.ID) }}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                    <a href="{{ url_for('admin_edit_user', user_id=user.ID) }}" class="btn btn-sm btn-warning me-1">Edit</a>
+                    <button class="btn btn-sm btn-danger" onclick="deleteUser('{{ user.ID }}', '{{ user.Name }}')">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav aria-label="Users pagination">
+    <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page - 1 }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+            </li>
+        {% endif %}
+        
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ p }}</span>
+                </li>
+            {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ p }}{% if query %}&q={{ query }}{% endif %}">{{ p }}</a>
+                </li>
+            {% elif p == 4 and page > 5 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% elif p == total_pages - 3 and page < total_pages - 4 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page < total_pages %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page + 1 }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<div class="text-center text-muted">
+    Showing {{ ((page - 1) * 10) + 1 }} to {{ ((page - 1) * 10) + users|length }} of {{ total }} users
+</div>
+{% endif %}
+
+<script>
+function deleteUser(userId, userName) {
+    if (confirm('Are you sure you want to delete user "' + userName + '"? This action cannot be undone.')) {
+        fetch('/delete_user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User deleted successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting user');
+        });
+    }
+}
+</script>
+{% endblock %}

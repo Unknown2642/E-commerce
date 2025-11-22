@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Register - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Register</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="security_question" class="form-label">Security Question <span class="text-danger">*</span></label>
+                        <select class="form-control" id="security_question" name="security_question" required>
+                            <option value="">Select a question</option>
+                            <option value="What is your favorite color?">What is your favorite color?</option>
+                            <option value="What is your pet name?">What is your pet name?</option>
+                            <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                            <option value="What city were you born in?">What city were you born in?</option>
+                            <option value="What is your favorite food?">What is your favorite food?</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="security_answer" class="form-label">Security Answer <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="security_answer" name="security_answer" 
+                               placeholder="Enter your answer" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <a href="{{ url_for('login') }}" class="btn btn-link">Already have an account? Login</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const phone = document.getElementById('phone').value.trim();
+        const address = document.getElementById('address').value.trim();
+        
+        if (!name) {
+            alert('Name is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!email || !email.includes('@')) {
+            alert('Valid email is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!password || password.length < 6) {
+            alert('Password must be at least 6 characters');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!phone) {
+            alert('Phone number is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!address) {
+            alert('Address is required');
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

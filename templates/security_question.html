@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Security Question - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3>Security Question</h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Please answer your security question to reset your password.</p>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>{{ question }}</strong></label>
+                        <input type="text" class="form-control" name="answer" 
+                               placeholder="Enter your answer" required>
+                        <small class="text-muted">Answer is case-insensitive</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify Answer</button>
+                    <a href="{{ url_for('forgot_password') }}" class="btn btn-link">Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - E-Commerce App{% endblock %}
+
+{% block content %}
+<h2>Product Catalog</h2>
+
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            {% if product.Image %}
+                <img src="{{ url_for('static', filename=product.Image) }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+            {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <span class="text-muted">No Image</span>
+                </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.Name }}</h5>
+                <p class="card-text">{{ product.Description[:100] }}...</p>
+                <p class="card-text">
+                    <strong>₹{{ "%.2f"|format(product.Price) }}</strong>
+                    {% if product.Quantity > 10 %}
+                        <small class="text-success">(In Stock)</small>
+                    {% elif product.Quantity > 0 %}
+                        <small class="text-warning">(Only {{ product.Quantity }} left)</small>
+                    {% else %}
+                        <small class="text-danger">(Out of Stock)</small>
+                    {% endif %}
+                </p>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('product_detail', product_id=product.ID) }}" class="btn btn-outline-primary">View Details</a>
+                    {% if product.Quantity > 0 %}
+                        <form method="POST" action="{{ url_for('add_to_cart') }}" class="d-inline">
+                            <input type="hidden" name="product_id" value="{{ product.ID }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-success btn-sm">Add to Cart</button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm" disabled>Out of Stock</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

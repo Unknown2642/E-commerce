@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Product - {{ product.Name }} - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit Product - {{ product.Name }}</h2>
+    <a href="{{ url_for('admin_products') }}" class="btn btn-outline-primary">Back to Products</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ product.Name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required>{{ product.Description }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price ($) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="price" name="price" 
+                                       step="0.01" min="0" value="{{ product.Price }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" 
+                                       min="0" value="{{ product.Quantity }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                        <select class="form-control" id="category" name="category" required>
+                            <option value="Electronics" {{ 'selected' if product.Category == 'Electronics' else '' }}>Electronics</option>
+                            <option value="Clothing" {{ 'selected' if product.Category == 'Clothing' else '' }}>Clothing</option>
+                            <option value="Books" {{ 'selected' if product.Category == 'Books' else '' }}>Books</option>
+                            <option value="Home" {{ 'selected' if product.Category == 'Home' else '' }}>Home & Garden</option>
+                            <option value="Sports" {{ 'selected' if product.Category == 'Sports' else '' }}>Sports</option>
+                            <option value="General" {{ 'selected' if product.Category == 'General' else '' }}>General</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Product Image</label>
+                        {% if product.Image %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename=product.Image) }}" style="width: 100px; height: 100px; object-fit: cover;" class="rounded">
+                                <small class="text-muted d-block">Current image</small>
+                            </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <small class="form-text text-muted">Leave empty to keep current image. Supported formats: PNG, JPG, JPEG, GIF</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Update Product</button>
+                    <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const price = document.getElementById('price').value;
+        const quantity = document.getElementById('quantity').value;
+        const category = document.getElementById('category').value;
+        
+        if (!name) {
+            alert('Product name is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!description) {
+            alert('Description is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!price || price <= 0) {
+            alert('Valid price is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!quantity || quantity < 0) {
+            alert('Valid quantity is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!category) {
+            alert('Please select a category');
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

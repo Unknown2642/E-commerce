@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Search Results</h2>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">Back to Products</a>
+</div>
+
+{% if query %}
+    <p>Showing results for: <strong>"{{ query }}"</strong> ({{ products|length }} found)</p>
+{% endif %}
+
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            {% if product.Image %}
+                <img src="{{ url_for('static', filename=product.Image) }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+            {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <span class="text-muted">No Image</span>
+                </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.Name }}</h5>
+                <p class="card-text">{{ product.Description[:100] }}...</p>
+                <p class="card-text">
+                    <strong>${{ "%.2f"|format(product.Price) }}</strong>
+                    <small class="text-muted">({{ product.Quantity }} {{ 'item' if product.Quantity == 1 else 'items' }} in stock)</small>
+                </p>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('product_detail', product_id=product.ID) }}" class="btn btn-outline-primary">View Details</a>
+                    <form method="POST" action="{{ url_for('add_to_cart') }}" class="d-inline">
+                        <input type="hidden" name="product_id" value="{{ product.ID }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-success btn-sm">Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="text-center">
+            <h4>No products found</h4>
+            <p>Try searching with different keywords.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

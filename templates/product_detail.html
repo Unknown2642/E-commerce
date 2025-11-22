@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.Name }} - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        {% if product.Image %}
+            <img src="{{ url_for('static', filename=product.Image) }}" class="img-fluid rounded">
+        {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 400px;">
+                <span class="text-muted">No Image Available</span>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        <h1>{{ product.Name }}</h1>
+        <p class="lead">{{ product.Description }}</p>
+        <h3 class="text-success">₹{{ "%.2f"|format(product.Price) }}</h3>
+        
+        {% if reviews %}
+        <div class="mb-3">
+            <span class="text-warning">
+                {% for i in range(5) %}
+                    {% if i < avg_rating %}
+                        ★
+                    {% else %}
+                        ☆
+                    {% endif %}
+                {% endfor %}
+            </span>
+            <span class="ms-2">{{ avg_rating }}/5 ({{ review_count }} {{ 'review' if review_count == 1 else 'reviews' }})</span>
+        </div>
+        {% endif %}
+        <p><strong>Stock:</strong> 
+            {% if product.Quantity > 10 %}
+                <span class="text-success">In Stock</span>
+            {% elif product.Quantity > 0 %}
+                <span class="text-warning">{{ product.Quantity }} {{ 'item' if product.Quantity == 1 else 'items' }} left</span>
+            {% else %}
+                <span class="text-danger">Out of Stock</span>
+            {% endif %}
+        </p>
+        <p><strong>Category:</strong> {{ product.Category or 'General' }}</p>
+        
+        {% if product.Quantity > 0 %}
+            <form method="POST" action="{{ url_for('add_to_cart') }}">
+                <input type="hidden" name="product_id" value="{{ product.ID }}">
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" 
+                           min="1" max="{{ product.Quantity }}" value="1" style="width: 100px;">
+                    <small class="text-muted">Maximum: {{ product.Quantity }}</small>
+                </div>
+                <button type="submit" class="btn btn-success btn-lg">Add to Cart</button>
+            </form>
+        {% else %}
+            <div class="alert alert-danger">
+                <strong>Out of Stock</strong> - This item is currently unavailable
+            </div>
+            <button class="btn btn-secondary btn-lg" disabled>Out of Stock</button>
+        {% endif %}
+        
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary mt-3">Back to Products</a>
+    </div>
+</div>
+
+<!-- Reviews Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>Customer Reviews</h3>
+        
+        {% if session.user_id %}
+        <!-- Add Review Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Write a Review</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_review', product_id=product.ID) }}">
+                    <div class="mb-3">
+                        <label class="form-label">Rating *</label>
+                        <div class="rating">
+                            {% for i in range(5, 0, -1) %}
+                            <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" required>
+                            <label for="star{{ i }}">★</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="review" class="form-label">Review *</label>
+                        <textarea class="form-control" id="review" name="review" rows="4" 
+                                  placeholder="Share your experience with this product..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <a href="{{ url_for('login') }}">Login</a> to write a review
+        </div>
+        {% endif %}
+        
+        <!-- Display Reviews -->
+        {% if reviews %}
+            {% for review_data in reviews %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title">{{ review_data.user_name }}</h6>
+                            <div class="text-warning mb-2">
+                                {% for i in range(5) %}
+                                    {% if i < review_data.review.Rating %}
+                                        ★
+                                    {% else %}
+                                        ☆
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-2 text-muted">{{ review_data.review.Rating }}/5</span>
+                            </div>
+                            <p class="card-text">{{ review_data.review.Review }}</p>
+                        </div>
+                        <small class="text-muted">{{ review_data.review.Date[:10] if review_data.review.Date else 'N/A' }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center text-muted py-4">
+                <h5>No reviews yet</h5>
+                <p>Be the first to review this product!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating input {
+    display: none;
+}
+
+.rating label {
+    font-size: 1.5rem;
+    color: #ddd;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.rating input:checked ~ label,
+.rating label:hover,
+.rating label:hover ~ label {
+    color: #ffc107;
+}
+</style>
+{% endblock %}

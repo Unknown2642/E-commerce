@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Orders - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Order Management</h2>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary">Back to Dashboard</a>
+</div>
+
+<form method="GET" action="{{ url_for('admin_orders') }}" id="filterForm">
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" placeholder="Search orders..." value="{{ query or '' }}">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-control" name="status" onchange="this.form.submit()">
+                <option value="">All Status</option>
+                <option value="pending" {{ 'selected' if status_filter == 'pending' else '' }}>Pending</option>
+                <option value="completed" {{ 'selected' if status_filter == 'completed' else '' }}>Approved</option>
+                <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' else '' }}>Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-control" name="payment" onchange="this.form.submit()">
+                <option value="">All Payments</option>
+                <option value="card" {{ 'selected' if payment_filter == 'card' else '' }}>Card</option>
+                <option value="upi" {{ 'selected' if payment_filter == 'upi' else '' }}>UPI</option>
+                <option value="cod" {{ 'selected' if payment_filter == 'cod' else '' }}>COD</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="input-group">
+                <input type="date" class="form-control" name="date" value="{{ date_filter or '' }}" onchange="this.form.submit()">
+                <button class="btn btn-outline-secondary" type="button" onclick="clearDate()">Clear</button>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-12">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearAllFilters()">Clear All Filters</button>
+        </div>
+    </div>
+</form>
+
+{% if query or status_filter or payment_filter or date_filter %}
+<div class="alert alert-info">
+    <strong>Active Filters:</strong>
+    {% if query %} Search: {{ query|safe }} |{% endif %}
+    {% if status_filter %} Status: {{ status_filter|safe }} |{% endif %}
+    {% if payment_filter %} Payment: {{ payment_filter|safe }} |{% endif %}
+    {% if date_filter %} Date: {{ date_filter|safe }}{% endif %}
+</div>
+{% endif %}
+
+<script>
+function clearDate() {
+    document.querySelector('input[name=date]').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+function clearAllFilters() {
+    document.querySelector('input[name=q]').value = '';
+    document.querySelector('select[name=status]').value = '';
+    document.querySelector('select[name=payment]').value = '';
+    document.querySelector('input[name=date]').value = '';
+    document.getElementById('filterForm').submit();
+}
+</script>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Subtotal</th>
+                <th>Discount</th>
+                <th>Total Paid</th>
+                <th>Payment Method</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order_detail in orders %}
+            <tr>
+                <td>{{ order_detail.order.ID[:8] }}...</td>
+                <td>{{ order_detail.user.Name or 'Unknown' }}</td>
+                <td>{{ order_detail.product.Name or 'Unknown Product' }}</td>
+                <td>{{ order_detail.order.Quantity }}</td>
+                <td>₹{{ "%.2f"|format(order_detail.product.Price or 0) }}</td>
+                <td>₹{{ "%.2f"|format(order_detail.order.get('Subtotal', (order_detail.product.Price or 0) * (order_detail.order.Quantity or 1))) }}</td>
+                <td>₹{{ "%.2f"|format(order_detail.order.get('Discount', 0)) }}</td>
+                <td><strong>₹{{ "%.2f"|format(order_detail.order.get('Total', (order_detail.product.Price or 0) * (order_detail.order.Quantity or 1))) }}</strong></td>
+                <td>
+                    <span class="badge bg-{{ 'primary' if order_detail.order.PaymentMethod == 'card' else ('success' if order_detail.order.PaymentMethod == 'upi' else 'warning') }}">
+                        {{ 'Card' if order_detail.order.PaymentMethod == 'card' else ('UPI' if order_detail.order.PaymentMethod == 'upi' else 'COD') }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-{{ 'warning' if order_detail.order.Status == 'pending' else ('success' if order_detail.order.Status == 'completed' else 'danger') }}">
+                        {{ order_detail.order.Status.title() }}
+                    </span>
+                </td>
+                <td>{{ order_detail.order.Date[:10] if order_detail.order.Date else 'N/A' }}</td>
+                <td>
+                    {% if order_detail.order.Status == 'pending' %}
+                        <button class="btn btn-sm btn-success me-1" onclick="updateOrderStatus('{{ order_detail.order.ID }}', 'completed')">Approve</button>
+                        <button class="btn btn-sm btn-danger" onclick="updateOrderStatus('{{ order_detail.order.ID }}', 'cancelled')">Cancel</button>
+                        <br><small class="text-muted">Stock: {{ order_detail.product.Quantity or 0 }} | Ordered: {{ order_detail.order.Quantity }}</small>
+                    {% else %}
+                        <span class="text-muted">{{ order_detail.order.Status.title() }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav aria-label="Orders pagination">
+    <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page - 1 }}&q={{ query or '' }}&status={{ status_filter or '' }}&date={{ date_filter or '' }}&payment={{ payment_filter or '' }}">Previous</a>
+            </li>
+        {% endif %}
+        
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ p }}</span>
+                </li>
+            {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ p }}&q={{ query or '' }}&status={{ status_filter or '' }}&date={{ date_filter or '' }}&payment={{ payment_filter or '' }}">{{ p }}</a>
+                </li>
+            {% elif p == 4 and page > 5 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% elif p == total_pages - 3 and page < total_pages - 4 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page < total_pages %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page + 1 }}&q={{ query or '' }}&status={{ status_filter or '' }}&date={{ date_filter or '' }}&payment={{ payment_filter or '' }}">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<div class="text-center text-muted">
+    Showing {{ ((page - 1) * 10) + 1 }} to {{ ((page - 1) * 10) + orders|length }} of {{ total }} order{{ 's' if total != 1 else '' }}
+</div>
+{% endif %}
+
+<script>
+function updateOrderStatus(orderId, newStatus) {
+    const action = newStatus === 'completed' ? 'approve' : 'cancel';
+    const message = newStatus === 'cancelled' ? 
+        'Are you sure you want to cancel this order? This will restore stock and process refund for paid orders.' : 
+        'Are you sure you want to approve this order?';
+    
+    if (confirm(message)) {
+        fetch('/admin/update_order_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || `Order ${action}d successfully`);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error updating order status');
+        });
+    }
+}
+</script>
+{% endblock %}

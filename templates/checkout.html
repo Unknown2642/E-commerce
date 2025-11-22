@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - E-Commerce App{% endblock %}
+
+{% block content %}
+<h2>Checkout</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Payment Method</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="checkout-form">
+
+                    {% if redirect_param %}
+                    <input type="hidden" name="redirect" value="{{ redirect_param }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" 
+                                   id="card" value="card" checked>
+                            <label class="form-check-label" for="card">
+                                Credit/Debit Card
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" 
+                                   id="upi" value="upi">
+                            <label class="form-check-label" for="upi">
+                                UPI Payment
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" 
+                                   id="cod" value="cod">
+                            <label class="form-check-label" for="cod">
+                                Cash on Delivery
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="card-details" class="mb-3">
+                        <h5>Card Details (Mock)</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="card_number" class="form-label">Card Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="card_number" name="card_number"
+                                       placeholder="1234 5678 9012 3456" maxlength="19">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="expiry" class="form-label">Expiry <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="expiry" name="expiry" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="cvv" class="form-label">CVV <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" maxlength="4">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="upi-details" class="mb-3" style="display: none;">
+                        <h5>UPI Payment (Mock)</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="upi_id" class="form-label">UPI ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="upi_id" name="upi_id"
+                                       placeholder="yourname@paytm" maxlength="50">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="upi_pin" class="form-label">UPI PIN <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="upi_pin" name="upi_pin"
+                                       placeholder="Enter 4-6 digit PIN" maxlength="6">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">Supported: PhonePe, Paytm, GPay, BHIM</small>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-lg" id="place-order-btn">Place Order</button>
+                    <a href="{{ url_for('cart') }}" class="btn btn-outline-secondary">Back to Cart</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Order Summary</h4>
+            </div>
+            <div class="card-body">
+                {% if cart_items %}
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <div>
+                            <h6 class="mb-0">{{ item.product.Name }}</h6>
+                            <small class="text-muted">₹{{ "%.2f"|format(item.product.Price) }} × {{ item.quantity }}</small>
+                        </div>
+                        <span class="fw-bold">₹{{ "%.2f"|format(item.total) }}</span>
+                    </div>
+                    {% endfor %}
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>₹{{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    
+                    {% if discount_amount > 0 %}
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>Discount ({{ coupon_code }}):</span>
+                        <span>-₹{{ "%.2f"|format(discount_amount) }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total:</strong>
+                        <strong>₹{{ "%.2f"|format(total_amount) }}</strong>
+                    </div>
+                {% else %}
+                    <p>Your cart is empty.</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Continue Shopping</a>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if cart_items %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Discount Coupon</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="coupon_code" class="form-label">Coupon Code (Optional)</label>
+                    <input type="text" class="form-control" id="coupon_code" name="coupon_code" 
+                           placeholder="Enter coupon code" value="{{ coupon_code }}">
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="applyCoupon()">Apply Coupon</button>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <strong>Available Coupons:</strong><br>
+                        • SAVE10 - 10% off<br>
+                        • SAVE20 - 20% off<br>
+                        • WELCOME - 5% off (max ₹50)
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cardRadio = document.getElementById('card');
+    const upiRadio = document.getElementById('upi');
+    const codRadio = document.getElementById('cod');
+    const cardDetails = document.getElementById('card-details');
+    const upiDetails = document.getElementById('upi-details');
+    
+    function togglePaymentDetails() {
+        cardDetails.style.display = cardRadio.checked ? 'block' : 'none';
+        upiDetails.style.display = upiRadio.checked ? 'block' : 'none';
+    }
+    
+    cardRadio.addEventListener('change', togglePaymentDetails);
+    upiRadio.addEventListener('change', togglePaymentDetails);
+    codRadio.addEventListener('change', togglePaymentDetails);
+    
+    togglePaymentDetails();
+    
+    // Real-time card validation
+    const cardNumberInput = document.getElementById('card_number');
+    const expiryInput = document.getElementById('expiry');
+    const cvvInput = document.getElementById('cvv');
+    
+    cardNumberInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+        let formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+        e.target.value = formattedValue;
+        
+        const cardType = getCardType(value);
+        const isValid = validateCardNumber(value);
+        
+        showCardValidation(cardType, isValid, value.length);
+    });
+    
+    expiryInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0,2) + '/' + value.substring(2,4);
+        }
+        e.target.value = value;
+        
+        const isValid = validateExpiry(value);
+        showExpiryValidation(isValid);
+    });
+    
+    cvvInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '').substring(0,4);
+        const isValid = e.target.value.length >= 3;
+        showCvvValidation(isValid);
+    });
+    
+    // UPI validation
+    const upiIdInput = document.getElementById('upi_id');
+    const upiPinInput = document.getElementById('upi_pin');
+    
+    if (upiIdInput) {
+        upiIdInput.addEventListener('input', function(e) {
+            const upiId = e.target.value.trim();
+            if (upiId.length > 3) {
+                validateUpiId(upiId);
+            } else {
+                updateValidationMessage('upi_id', '', '');
+            }
+        });
+    }
+    
+    if (upiPinInput) {
+        upiPinInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0,6);
+            const isValid = e.target.value.length >= 4;
+            showUpiPinValidation(isValid);
+        });
+    }
+});
+
+function getCardType(number) {
+    const patterns = {
+        visa: /^4/,
+        mastercard: /^5[1-5]/,
+        amex: /^3[47]/,
+        discover: /^6(?:011|5)/,
+        rupay: /^60/
+    };
+    
+    for (let type in patterns) {
+        if (patterns[type].test(number)) {
+            return type;
+        }
+    }
+    return 'unknown';
+}
+
+function validateCardNumber(number) {
+    if (number.length < 13 || number.length > 19) return false;
+    
+    // Luhn algorithm
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = number.length - 1; i >= 0; i--) {
+        let digit = parseInt(number.charAt(i));
+        
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+        }
+        
+        sum += digit;
+        isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+}
+
+function validateExpiry(expiry) {
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+    
+    const [month, year] = expiry.split('/').map(Number);
+    if (month < 1 || month > 12) return false;
+    
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
+    
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+        return false;
+    }
+    
+    return true;
+}
+
+function showCardValidation(cardType, isValid, length) {
+    let message = '';
+    let className = '';
+    
+    if (length === 0) {
+        message = '';
+    } else if (length < 13) {
+        message = 'Enter more digits';
+        className = 'text-warning';
+    } else if (!isValid) {
+        message = 'Invalid card number';
+        className = 'text-danger';
+    } else {
+        const cardNames = {
+            visa: 'Visa',
+            mastercard: 'Mastercard', 
+            amex: 'American Express',
+            discover: 'Discover',
+            rupay: 'RuPay',
+            unknown: 'Unknown card type'
+        };
+        message = `Valid ${cardNames[cardType]} card`;
+        className = 'text-success';
+    }
+    
+    updateValidationMessage('card_number', message, className);
+}
+
+function showExpiryValidation(isValid) {
+    const expiry = document.getElementById('expiry').value;
+    let message = '';
+    let className = '';
+    
+    if (expiry.length === 0) {
+        message = '';
+    } else if (expiry.length < 5) {
+        message = 'Format: MM/YY';
+        className = 'text-warning';
+    } else if (!isValid) {
+        message = 'Invalid or expired date';
+        className = 'text-danger';
+    } else {
+        message = 'Valid expiry date';
+        className = 'text-success';
+    }
+    
+    updateValidationMessage('expiry', message, className);
+}
+
+function showCvvValidation(isValid) {
+    const cvv = document.getElementById('cvv').value;
+    let message = '';
+    let className = '';
+    
+    if (cvv.length === 0) {
+        message = '';
+    } else if (cvv.length < 3) {
+        message = 'Enter 3-4 digits';
+        className = 'text-warning';
+    } else {
+        message = 'Valid CVV';
+        className = 'text-success';
+    }
+    
+    updateValidationMessage('cvv', message, className);
+}
+
+function validateUpiId(upiId) {
+    fetch('/api/validate_upi', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({upi_id: upiId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        const className = data.valid ? 'text-success' : 'text-danger';
+        updateValidationMessage('upi_id', data.message, className);
+    })
+    .catch(error => {
+        updateValidationMessage('upi_id', 'Error validating UPI ID', 'text-warning');
+    });
+}
+
+function showUpiPinValidation(isValid) {
+    const pin = document.getElementById('upi_pin').value;
+    let message = '';
+    let className = '';
+    
+    if (pin.length === 0) {
+        message = '';
+    } else if (pin.length < 4) {
+        message = 'Enter 4-6 digits';
+        className = 'text-warning';
+    } else {
+        message = 'Valid UPI PIN';
+        className = 'text-success';
+    }
+    
+    updateValidationMessage('upi_pin', message, className);
+}
+
+function updateValidationMessage(fieldId, message, className) {
+    let msgElement = document.getElementById(fieldId + '_msg');
+    if (!msgElement) {
+        msgElement = document.createElement('small');
+        msgElement.id = fieldId + '_msg';
+        document.getElementById(fieldId).parentNode.appendChild(msgElement);
+    }
+    msgElement.textContent = message;
+    msgElement.className = className;
+}
+
+function applyCoupon() {
+    const couponCode = document.getElementById('coupon_code').value.trim();
+    const subtotal = {{ subtotal }};
+    
+    if (!couponCode) {
+        alert('Please enter a coupon code');
+        return;
+    }
+    
+    fetch('/api/validate_coupon', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            coupon_code: couponCode,
+            subtotal: subtotal
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            alert(data.message);
+            window.location.href = window.location.pathname + '?coupon=' + encodeURIComponent(couponCode);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error validating coupon');
+    });
+}
+
+
+
+// Form will submit normally to /checkout POST route
+</script>
+{% endblock %}

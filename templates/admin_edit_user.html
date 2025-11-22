@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - {{ user.Name }} - E-Commerce App{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit User - {{ user.Name }}</h2>
+    <div>
+        <a href="{{ url_for('admin_user_detail', user_id=user.ID) }}" class="btn btn-outline-secondary me-2">Cancel</a>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary">Back to Users</a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ user.Name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.Email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                        {% if user.Role == 'admin' %}
+                            <input type="text" class="form-control" value="Admin" readonly>
+                            <input type="hidden" name="role" value="admin">
+                            <small class="text-muted">Admin role cannot be changed</small>
+                        {% else %}
+                            <select class="form-control" id="role" name="role" required>
+                                <option value="user">User</option>
+                            </select>
+                            <small class="text-muted">Only user role available</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ user.Phone or '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="address" name="address" rows="3" required>{{ user.Address or '' }}</textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>Note:</strong> Password cannot be changed through this form. User must reset their own password.
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">Update User</button>
+                    <a href="{{ url_for('admin_user_detail', user_id=user.ID) }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const role = document.getElementById('role').value;
+        const phone = document.getElementById('phone').value.trim();
+        const address = document.getElementById('address').value.trim();
+        
+        if (!name) {
+            alert('Name is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!email || !email.includes('@')) {
+            alert('Valid email is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!role) {
+            alert('Please select a role');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!phone) {
+            alert('Phone number is required');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!address) {
+            alert('Address is required');
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}
